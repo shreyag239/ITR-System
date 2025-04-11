@@ -1854,4 +1854,4 @@ if __name__ == '__main__':
     reset_database()
     
     # Run the app
-    app.run(debug=DEBUG)
+    app.run(debug=DEBUG, port=8080)
