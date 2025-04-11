@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Notifications{% endblock %}
+{% block header_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Admin Notifications</h1>
+        <p class="text-gray-600">View all system notifications</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+    </a>
+</div>
+
+<!-- Notification Filters -->
+<div class="bg-white rounded-lg shadow-md p-4 border border-gray-200 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <div class="relative">
+                <input type="text" id="searchNotifications" placeholder="Search notifications..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+            </div>
+            <select id="typeFilter" class="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="">All Types</option>
+                <option value="referral">Referral</option>
+                <option value="registration">Registration</option>
+            </select>
+        </div>
+        <div>
+            <button id="markAllRead" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-check-double mr-2"></i> Mark All as Read
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications List -->
+<div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+    <div class="bg-blue-600 px-4 py-3">
+        <h2 class="text-lg font-semibold text-white">All Notifications</h2>
+    </div>
+    <div class="divide-y divide-gray-200" id="notificationsList">
+        {% for notification in notifications %}
+        <div class="notification-item p-4 hover:bg-gray-50 transition-colors" data-type="{{ notification.type }}" data-message="{{ notification.message }}">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 pt-0.5">
+                    <span class="inline-flex items-center justify-center h-10 w-10 rounded-full {% if notification.type == 'referral' %}bg-yellow-100{% elif notification.type == 'registration' %}bg-green-100{% else %}bg-blue-100{% endif %}">
+                        <i class="fas {% if notification.type == 'referral' %}fa-share-alt text-yellow-600{% elif notification.type == 'registration' %}fa-user-plus text-green-600{% else %}fa-info-circle text-blue-600{% endif %} text-lg"></i>
+                    </span>
+                </div>
+                <div class="ml-4 flex-1">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-900">{{ notification.message }}</p>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if notification.type == 'referral' %}bg-yellow-100 text-yellow-800{% elif notification.type == 'registration' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ notification.type|capitalize }}
+                        </span>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500">{{ notification.created_at }}</p>
+                    
+                    {% if notification.type == 'referral' %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('admin.referrals') }}" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-external-link-alt mr-1"></i> View Referrals
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="p-6 text-center">
+            <p class="text-gray-500">No notifications found</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Notifications Filtering
+    const searchNotifications = document.getElementById('searchNotifications');
+    const typeFilter = document.getElementById('typeFilter');
+    const notificationItems = document.querySelectorAll('.notification-item');
+    
+    function filterNotifications() {
+        const searchValue = searchNotifications.value.toLowerCase();
+        const typeValue = typeFilter.value;
+        
+        notificationItems.forEach(item => {
+            const message = item.dataset.message.toLowerCase();
+            const type = item.dataset.type;
+            
+            const searchMatch = message.includes(searchValue);
+            const typeMatch = !typeValue || type === typeValue;
+            
+            if (searchMatch && typeMatch) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    }
+    
+    searchNotifications.addEventListener('input', filterNotifications);
+    typeFilter.addEventListener('change', filterNotifications);
+    
+    // Mark All as Read
+    const markAllReadBtn = document.getElementById('markAllRead');
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', () => {
+            // In a real implementation, this would make an AJAX request to mark all as read
+            // For now, we'll just show a toast notification
+            showToast('All notifications marked as read', 'success');
+        });
+    }
+</script>
+{% endblock %}
+{% endblock %}

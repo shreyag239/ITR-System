@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ITR Management System{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    blue: {
+                        50: '#eff6ff',
+                        100: '#dbeafe',
+                        200: '#bfdbfe',
+                        300: '#93c5fd',
+                        400: '#60a5fa',
+                        500: '#3b82f6',
+                        600: '#2563eb',
+                        700: '#1d4ed8',
+                        800: '#1e40af',
+                        900: '#1e3a8a',
+                    },
+                    green: {
+                        50: '#f0fdf4',
+                        100: '#dcfce7',
+                        200: '#bbf7d0',
+                        300: '#86efac',
+                        400: '#4ade80',
+                        500: '#22c55e',
+                        600: '#16a34a',
+                        700: '#15803d',
+                        800: '#166534',
+                        900: '#14532d',
+                    }
+                }
+            }
+        }
+    }
+</script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(150%);
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        /* Sidebar active link */
+        .sidebar-link.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid #3b82f6;
+        }
+        
+        /* Timeline styles */
+        .timeline-container {
+            position: relative;
+        }
+        .timeline-container::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            background-color: #e5e7eb;
+            top: 0;
+            bottom: 0;
+            left: 18px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-left: 40px;
+            padding-bottom: 1rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: white;
+            border: 2px solid #3b82f6;
+            left: -29px;
+            top: 3px;
+            z-index: 1;
+        }
+        .timeline-item.completed::before {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
+        .timeline-item.pending::before {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+        }
+        
+        /* Dark mode toggle */
+        .dark {
+            color-scheme: dark;
+        }
+        .dark body {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        .dark .bg-white {
+            background-color: #1f2937;
+        }
+        .dark .bg-gray-50 {
+            background-color: #111827;
+        }
+        .dark .bg-gray-100 {
+            background-color: #374151;
+        }
+        .dark .border-gray-200 {
+            border-color: #374151;
+        }
+        .dark .text-gray-700 {
+            color: #f3f4f6;
+        }
+        .dark .text-gray-500 {
+            color: #9ca3af;
+        }
+        .dark .shadow {
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+    </style>
+
+<!-- Add these styles to fix form elements -->
+<style>
+    input, select, textarea {
+        border-width: 1px;
+        border-color: #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        --tw-ring-color: rgba(59, 130, 246, 0.5);
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+        box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+        border-color: #3b82f6;
+    }
+</style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="h-full bg-gray-50">
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        {% if session.get('user_id') %}
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-md transform transition-transform duration-300 ease-in-out md:translate-x-0 border-r border-gray-200 overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
+                    <i class="fas fa-file-invoice text-blue-600 text-2xl"></i>
+                    <span class="text-xl font-semibold text-gray-800">ITR Management</span>
+                </a>
+                <button id="closeSidebar" class="md:hidden text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <nav class="mt-4 px-2">
+                {% if session.get('is_admin') %}
+                <!-- Admin Navigation -->
+                <div class="mb-2 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Admin
+                </div>
+                <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md mb-1 {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt w-5 mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('admin.referrals') }}" class="sidebar-link flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md mb-1 {% if request.endpoint == 'admin.referrals' %}active{% endif %}">
+                    <i class="fas fa-share-alt w-5 mr-3"></i>
+                    <span>Referrals</span>
+                    {% if unread_referrals_count|default(0) > 0 %}
+                    <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ unread_referrals_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('admin.notifications') }}" class="sidebar-link flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md mb-1 {% if request.endpoint == 'admin.notifications' %}active{% endif %}">
+                    <i class="fas fa-bell w-5 mr-3"></i>
+                    <span>Notifications</span>
+                    {% if admin_notifications|default([])|length > 0 %}
+                    <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ admin_notifications|length }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('admin.add_new_client') }}" class="sidebar-link flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md mb-1 {% if request.endpoint == 'admin.add_new_client' %}active{% endif %}">
+                    <i class="fas fa-user-plus w-5 mr-3"></i>
+                    <span>Add Client</span>
+                </a>
+                {% else %}
+                <!-- Client Navigation -->
+                <div class="mb-2 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Client
+                </div>
+                <a href="{{ url_for('client.dashboard') }}" class="sidebar-link flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md mb-1 {% if request.endpoint == 'client.dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt w-5 mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('client.refer') }}" class="sidebar-link flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md mb-1 {% if request.endpoint == 'client.refer' %}active{% endif %}">
+                    <i class="fas fa-share-alt w-5 mr-3"></i>
+                    <span>Referrals</span>
+                </a>
+                <a href="{{ url_for('client.profile') }}" class="sidebar-link flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md mb-1 {% if request.endpoint == 'client.profile' %}active{% endif %}">
+                    <i class="fas fa-user-circle w-5 mr-3"></i>
+                    <span>Profile</span>
+                </a>
+                {% endif %}
+                
+                <!-- Common Navigation -->
+                <div class="mt-6 mb-2 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Account
+                </div>
+                <a href="{{ url_for('client.logout' if not session.get('is_admin') else 'admin.logout') }}" class="sidebar-link flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md mb-1">
+                    <i class="fas fa-sign-out-alt w-5 mr-3"></i>
+                    <span>Logout</span>
+                </a>
+                
+                <!-- Theme Toggle -->
+                <div class="mt-6 px-4">
+                    <button id="themeToggle" class="flex items-center w-full px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-md">
+                        <i class="fas fa-moon w-5 mr-3 dark:hidden"></i>
+                        <i class="fas fa-sun w-5 mr-3 hidden dark:block"></i>
+                        <span class="dark:hidden">Dark Mode</span>
+                        <span class="hidden dark:block">Light Mode</span>
+                    </button>
+                </div>
+            </nav>
+        </aside>
+        {% endif %}
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col {% if session.get('user_id') %}md:ml-64{% endif %}">
+            <!-- Top Navigation Bar -->
+            {% if session.get('user_id') %}
+            <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+                <div class="flex items-center justify-between px-4 py-3">
+                    <div class="flex items-center">
+                        <button id="openSidebar" class="md:hidden text-gray-500 hover:text-gray-700 mr-3">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 class="text-lg font-semibold text-gray-800">
+                            {% block header_title %}ITR Management System{% endblock %}
+                        </h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        {% if not session.get('is_admin') %}
+                        <div class="relative">
+                            <button id="notificationButton" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-bell"></i>
+                                {% if notifications|default([])|selectattr('is_read', 'equalto', 0)|list|length > 0 %}
+                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                                    {{ notifications|selectattr('is_read', 'equalto', 0)|list|length }}
+                                </span>
+                                {% endif %}
+                            </button>
+                            <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-20 border border-gray-200">
+                                <div class="p-3 border-b border-gray-200">
+                                    <h3 class="text-sm font-semibold text-gray-700">Notifications</h3>
+                                </div>
+                                <div class="max-h-64 overflow-y-auto">
+                                    {% if notifications|default([]) %}
+                                    {% for notification in notifications %}
+                                    <div class="p-3 border-b border-gray-200 {% if not notification.is_read %}bg-blue-50{% endif %}">
+                                        <p class="text-sm text-gray-700">{{ notification.message }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">{{ notification.created_at }}</p>
+                                        {% if not notification.is_read %}
+                                        <form method="post" action="{{ url_for('client.read_notification', notification_id=notification.id) }}" class="mt-2">
+                                            <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">Mark as Read</button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% else %}
+                                    <div class="p-3">
+                                        <p class="text-sm text-gray-500">No notifications</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold mr-2">
+                                {{ session.get('username', 'U')[0]|upper }}
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">{{ session.get('username', 'User') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            {% endif %}
+            
+            <!-- Main Content Area -->
+            <main class="flex-1 p-4 overflow-auto">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div id="flashMessages" class="mb-4">
+                    {% for category, message in messages %}
+                    <div class="flash-message p-4 mb-2 rounded-md {% if category == 'success' %}bg-green-100 text-green-800 border border-green-200{% elif category == 'error' %}bg-red-100 text-red-800 border border-red-200{% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if category == 'success' %}fa-check-circle text-green-500{% elif category == 'error' %}fa-exclamation-circle text-red-500{% else %}fa-info-circle text-blue-500{% endif %} mr-3"></i>
+                            <span>{{ message }}</span>
+                            <button type="button" class="ml-auto text-gray-500 hover:text-gray-700 close-flash">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endwith %}
+                
+                <!-- Page Content -->
+                {% block content %}{% endblock %}
+            </main>
+            
+            <!-- Footer -->
+            <footer class="bg-white border-t border-gray-200 py-4 px-6 text-center text-sm text-gray-600">
+                <p>&copy; {{ now.year if now else '2023' }} ITR Management System. All rights reserved.</p>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Toast Notification Container -->
+    <div id="toastContainer"></div>
+    
+    <!-- Modal Container -->
+    <div id="modalContainer" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+        <div id="modalContent" class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <!-- Modal content will be inserted here -->
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            });
+            
+            // Check for saved theme preference
+            if (localStorage.getItem('theme') === 'dark' || 
+                (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        
+        // Mobile Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const openSidebar = document.getElementById('openSidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        
+        if (openSidebar && sidebar) {
+            openSidebar.addEventListener('click', () => {
+                sidebar.classList.remove('-translate-x-full');
+            });
+        }
+        
+        if (closeSidebar && sidebar) {
+            closeSidebar.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+            });
+        }
+        
+        // Notification Dropdown
+        const notificationButton = document.getElementById('notificationButton');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        
+        if (notificationButton && notificationDropdown) {
+            notificationButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('hidden');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!notificationDropdown.contains(e.target) && e.target !== notificationButton) {
+                    notificationDropdown.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Flash Message Close
+        document.querySelectorAll('.close-flash').forEach(button => {
+            button.addEventListener('click', () => {
+                button.closest('.flash-message').remove();
+            });
+        });
+        
+        // Toast Notification
+        function showToast(message, type = 'success', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = `toast p-4 rounded-md shadow-lg ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`;
+            
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-3"></i>
+                    <span>${message}</span>
+                    <button type="button" class="ml-auto text-white hover:text-gray-200 close-toast">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Auto hide
+            const timeout = setTimeout(() => {
+                hideToast(toast);
+            }, duration);
+            
+            // Close button
+            toast.querySelector('.close-toast').addEventListener('click', () => {
+                clearTimeout(timeout);
+                hideToast(toast);
+            });
+        }
+        
+        function hideToast(toast) {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }
+        
+        // Modal Functions
+        function openModal(content) {
+            const modalContainer = document.getElementById('modalContainer');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = content;
+            modalContainer.classList.remove('hidden');
+            
+            // Close modal when clicking outside
+            modalContainer.addEventListener('click', (e) => {
+                if (e.target === modalContainer) {
+                    closeModal();
+                }
+            });
+            
+            // Close modal with escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+            
+            // Add event listener to close buttons
+            const closeButtons = modalContent.querySelectorAll('.modal-close');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', closeModal);
+            });
+        }
+        
+        function closeModal() {
+            const modalContainer = document.getElementById('modalContainer');
+            modalContainer.classList.add('hidden');
+        }
+        
+        // Copy to clipboard function
+        function copyToClipboard(text, elementId) {
+            navigator.clipboard.writeText(text).then(() => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.classList.remove('hidden');
+                    setTimeout(() => {
+                        element.classList.add('hidden');
+                    }, 2000);
+                }
+                showToast('Copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showToast('Failed to copy to clipboard', 'error');
+            });
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,89 @@
+
+/* Global Styles */
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+  }
+  
+  .navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .navbar-brand {
+    font-weight: 600;
+  }
+  
+  .card {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+  }
+  
+  .card-header {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    padding: 0.75rem 1.25rem;
+  }
+  
+  /* Avatar styles */
+  .avatar-circle {
+    width: 80px;
+    height: 80px;
+    background-color: #0d6efd;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+  }
+  
+  .initials {
+    font-size: 2rem;
+    color: white;
+    font-weight: bold;
+  }
+  
+  /* Footer */
+  .footer {
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+  }
+  
+  /* Notification styles */
+  .list-group-item-warning {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+  }
+  
+  /* Table styles */
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  .table th {
+    background-color: #f8f9fa;
+  }
+  
+  /* Badge styles */
+  .badge {
+    padding: 0.5em 0.75em;
+  }
+  
+  /* Referral styles */
+  .referral-box {
+    background-color: #e9f7ef;
+    border-left: 4px solid #0d6efd;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+  }
+  
+  .referral-url {
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-family: monospace;
+  }
+  

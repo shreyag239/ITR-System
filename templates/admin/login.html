@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Login{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="bg-green-600 py-4 px-6">
+            <h2 class="text-2xl font-bold text-white text-center">Admin Login</h2>
+        </div>
+        
+        <div class="p-6">
+            <form method="post" action="{{ url_for('admin.login') }}" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-user-shield text-gray-400"></i>
+                        </div>
+                        <input type="text" id="username" name="username" class="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" placeholder="Enter admin username" required>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-lock text-gray-400"></i>
+                        </div>
+                        <input type="password" id="password" name="password" class="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm" placeholder="Enter admin password" required>
+                    </div>
+                </div>
+                
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Login
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-6 bg-gray-50 p-4 rounded-md border border-gray-200">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
+                <div class="text-sm text-gray-600">
+                    <p><span class="font-medium">Username:</span> admin</p>
+                    <p><span class="font-medium">Password:</span> admin123</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

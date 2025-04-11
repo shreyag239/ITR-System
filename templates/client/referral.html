@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Refer a Friend{% endblock %}
+{% block header_title %}Referral Management{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Referral Form Card -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+        <div class="bg-blue-600 px-4 py-3">
+            <h2 class="text-lg font-semibold text-white">Refer Someone</h2>
+        </div>
+        <div class="p-6">
+            <div class="mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Share Your Referral Link</h3>
+                <div class="flex">
+                    <input type="text" id="referralUrl" value="{{ referral_url }}" class="flex-1 border-gray-300 rounded-l-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" readonly>
+                    <button type="button" onclick="copyToClipboard('{{ referral_url }}', 'copyMessage')" class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 sm:text-sm hover:bg-gray-100">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <p id="copyMessage" class="mt-1 text-sm text-green-600 hidden">Copied!</p>
+                
+                <div class="mt-4 flex space-x-2">
+                    <a href="https://wa.me/?text={{ referral_url|urlencode }}" target="_blank" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fab fa-whatsapp text-green-500 mr-2"></i>
+                        WhatsApp
+                    </a>
+                    <a href="mailto:?subject=Join%20ITR%20Management%20System&body={{ referral_url|urlencode }}" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-envelope text-blue-500 mr-2"></i>
+                        Email
+                    </a>
+                    <a href="sms:?body={{ referral_url|urlencode }}" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-sms text-yellow-500 mr-2"></i>
+                        SMS
+                    </a>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Or Enter Their Details</h3>
+                <form method="post" class="space-y-4">
+                    <div>
+                        <label for="referred_name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" name="referred_name" id="referred_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                    </div>
+                    
+                    <div>
+                        <label for="referred_email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" name="referred_email" id="referred_email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                    </div>
+                    
+                    <div>
+                        <label for="referred_phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                        <input type="tel" name="referred_phone" id="referred_phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+                    </div>
+                    
+                    <div>
+                        <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks (Optional)</label>
+                        <textarea name="remarks" id="remarks" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-paper-plane mr-2"></i> Send Referral
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Referrals List Card -->
+    <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+        <div class="bg-blue-600 px-4 py-3 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-white">Your Referrals</h2>
+            <div class="flex items-center space-x-2">
+                <div class="relative">
+                    <input type="text" id="searchReferrals" placeholder="Search..." class="block w-full pl-10 pr-3 py-1.5 border border-blue-400 rounded-md bg-blue-500 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent sm:text-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-blue-300"></i>
+                    </div>
+                </div>
+                <select id="statusFilterReferrals" class="block pl-3 pr-10 py-1.5 border border-blue-400 rounded-md bg-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent sm:text-sm">
+                    <option value="">All Status</option>
+                    <option value="registered">Registered</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+        </div>
+        <div class="p-4">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="referralsTable">
+                        {% for referral in referrals %}
+                        <tr class="referral-row" data-name="{{ referral.referred_name }}" data-email="{{ referral.referred_email }}" data-status="{% if referral.is_registered %}registered{% else %}pending{% endif %}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ referral.referred_name }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ referral.referred_email }}</div>
+                                <div class="text-sm text-gray-500">{{ referral.referred_phone }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ referral.created_at }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if referral.is_registered %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {% if referral.is_registered %}Registered{% else %}Pending{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                                No referrals yet
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-6">
+                <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Referral Statistics</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-xs text-gray-500">Total Referrals</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ referrals|length }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Converted</p>
+                            <p class="text-lg font-semibold text-green-600">
+                                {% set registered_count = 0 %}
+                                {% for referral in referrals %}
+                                    {% if referral.is_registered %}
+                                        {% set registered_count = registered_count + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ registered_count }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    // Referrals Table Filtering
+    const searchReferrals = document.getElementById('searchReferrals');
+    const statusFilterReferrals = document.getElementById('statusFilterReferrals');
+    const referralRows = document.querySelectorAll('.referral-row');
+    
+    function filterReferralsTable() {
+        const searchValue = searchReferrals.value.toLowerCase();
+        const statusValue = statusFilterReferrals.value;
+        
+        referralRows.forEach(row => {
+            const name = row.dataset.name.toLowerCase();
+            const email = row.dataset.email.toLowerCase();
+            const status = row.dataset.status;
+            
+            const searchMatch = name.includes(searchValue) || email.includes(searchValue);
+            const statusMatch = !statusValue || status === statusValue;
+            
+            if (searchMatch && statusMatch) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    }
+    
+    searchReferrals.addEventListener('input', filterReferralsTable);
+    statusFilterReferrals.addEventListener('change', filterReferralsTable);
+    
+    // Copy to clipboard function is already defined in base.html
+</script>
+{% endblock %}
+{% endblock %}
