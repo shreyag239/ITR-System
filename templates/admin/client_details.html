@@ -137,7 +137,7 @@
                             <div class="text-sm text-gray-900">{{ record.year }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ record.status == 'Completed' ? 'bg-green-100 text-green-800' : record.status == 'In Progress' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800' }}">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if record.status == 'Completed' %}bg-green-100 text-green-800{% elif record.status == 'In Progress' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %}">
                                 {{ record.status }}
                             </span>
                         </td>
@@ -203,8 +203,8 @@
                             {{ referral.created_at }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ referral.referred_client_id ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                {{ referral.referred_client_id ? 'Registered' : 'Pending' }}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if referral.referred_client_id %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ 'Registered' if referral.referred_client_id else 'Pending' }}
                             </span>
                         </td>
                     </tr>

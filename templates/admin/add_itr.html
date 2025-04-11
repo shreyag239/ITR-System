@@ -37,13 +37,15 @@
                     
                     <div class="sm:col-span-3">
                         <label for="year" class="block text-sm font-medium text-gray-700">Financial Year</label>
-                        <select id="year" name="year" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                            <option value="2023-2024">2023-2024</option>
-                            <option value="2022-2023">2022-2023</option>
-                            <option value="2021-2022">2021-2022</option>
-                            <option value="2020-2021">2020-2021</option>
-                            <option value="2019-2020">2019-2020</option>
-                        </select>
+                        <div class="mt-1 flex items-center space-x-2">
+                            <select id="yearDropdown" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                <option value="">-- Select Year --</option>
+                                <!-- Year options will be populated dynamically -->
+                            </select>
+                            <span class="text-gray-500">or</span>
+                            <input type="text" id="yearInput" name="year" placeholder="YYYY-YYYY" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" pattern="\d{4}-\d{4}" title="Please use format YYYY-YYYY (e.g., 2023-2024)">
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Select from dropdown or type manually in YYYY-YYYY format</p>
                     </div>
                     
                     <div class="sm:col-span-3">
@@ -94,4 +96,40 @@
         </div>
     </div>
 </div>
+<script>
+    // Function to populate financial year dropdown
+    function populateFinancialYears() {
+        const yearDropdown = document.getElementById('yearDropdown');
+        const yearInput = document.getElementById('yearInput');
+        const currentYear = new Date().getFullYear();
+        
+        // Generate 5 years in the past and 2 years in the future
+        for (let i = currentYear + 2; i >= currentYear - 5; i--) {
+            const financialYear = `${i}-${i + 1}`;
+            const option = document.createElement('option');
+            option.value = financialYear;
+            option.textContent = financialYear;
+            yearDropdown.appendChild(option);
+        }
+        
+        // Set current financial year as default in the input field
+        yearInput.value = `${currentYear}-${currentYear + 1}`;
+        
+        // Handle dropdown change
+        yearDropdown.addEventListener('change', function() {
+            if (this.value) {
+                yearInput.value = this.value;
+            }
+        });
+        
+        // Handle manual input focus
+        yearInput.addEventListener('focus', function() {
+            // User is typing manually, reset dropdown
+            yearDropdown.value = '';
+        });
+    }
+    
+    // Call the function when the page loads
+    document.addEventListener('DOMContentLoaded', populateFinancialYears);
+</script>
 {% endblock %}
