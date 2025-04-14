@@ -112,10 +112,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 # Add the context processor here
 @app.context_processor
 def utility_processor():
-    return dict(
-        query_db=query_db,
-        now=datetime.now()  # Add current datetime to all templates
-    )
+    return dict(query_db=query_db)
 
 # Set template folder explicitly and print for debugging
 app.template_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
@@ -1854,4 +1851,4 @@ if __name__ == '__main__':
     reset_database()
     
     # Run the app
-    app.run(debug=DEBUG, port=8080)
+    app.run(debug=DEBUG)

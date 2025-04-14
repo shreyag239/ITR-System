@@ -22,7 +22,7 @@
         <div class="p-6">
             <form method="post" enctype="multipart/form-data" class="space-y-6">
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                    <div class="sm:col-span-3">
+                    <div class="sm:col-span-6 md:col-span-3">
                         <label for="itr_type" class="block text-sm font-medium text-gray-700">ITR Type</label>
                         <select id="itr_type" name="itr_type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="ITR-1">ITR-1 (Sahaj)</option>
@@ -35,20 +35,20 @@
                         </select>
                     </div>
                     
-                    <div class="sm:col-span-3">
+                    <div class="sm:col-span-6 md:col-span-3">
                         <label for="year" class="block text-sm font-medium text-gray-700">Financial Year</label>
-                        <div class="mt-1 flex items-center space-x-2">
+                        <div class="mt-1 flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                             <select id="yearDropdown" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                                 <option value="">-- Select Year --</option>
                                 <!-- Year options will be populated dynamically -->
                             </select>
-                            <span class="text-gray-500">or</span>
+                            <span class="text-gray-500 hidden sm:block">or</span>
                             <input type="text" id="yearInput" name="year" placeholder="YYYY-YYYY" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" pattern="\d{4}-\d{4}" title="Please use format YYYY-YYYY (e.g., 2023-2024)">
                         </div>
                         <p class="mt-1 text-xs text-gray-500">Select from dropdown or type manually in YYYY-YYYY format</p>
                     </div>
                     
-                    <div class="sm:col-span-3">
+                    <div class="sm:col-span-6 md:col-span-3">
                         <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                         <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                             <option value="Pending">Pending</option>
@@ -57,7 +57,7 @@
                         </select>
                     </div>
                     
-                    <div class="sm:col-span-3">
+                    <div class="sm:col-span-6 md:col-span-3">
                         <label for="filing_date" class="block text-sm font-medium text-gray-700">Filing Date</label>
                         <input type="date" name="filing_date" id="filing_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                     </div>

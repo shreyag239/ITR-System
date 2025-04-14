@@ -3,10 +3,10 @@
 {% block title %}ITR Management System{% endblock %}
 
 {% block content %}
-<div class="min-h-[80vh] flex flex-col items-center justify-center">
+<div class="min-h-[80vh] flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-10">
-        <h1 class="text-4xl font-bold text-gray-800 mb-4">Welcome to ITR Management System</h1>
-        <p class="text-xl text-gray-600 max-w-2xl mx-auto">A comprehensive solution for managing Income Tax Returns and client referrals.</p>
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Welcome to ITR Management System</h1>
+        <p class="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">A comprehensive solution for managing Income Tax Returns and client referrals.</p>
     </div>
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
@@ -41,6 +41,7 @@
                 </a>
             </div>
         </div>
+        <!-- Login cards -->
     </div>
     
     <div class="mt-10 text-center">
@@ -51,7 +52,7 @@
         </a>
     </div>
     
-    <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full">
+    <div class="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl w-full">
         <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
             <div class="text-blue-600 mb-4">
                 <i class="fas fa-file-invoice text-3xl"></i>
@@ -75,6 +76,7 @@
             <h3 class="text-xl font-semibold text-gray-800 mb-2">Notifications</h3>
             <p class="text-gray-600">Stay updated with real-time notifications about your ITR status.</p>
         </div>
+        <!-- Feature cards -->
     </div>
 </div>
 {% endblock %}

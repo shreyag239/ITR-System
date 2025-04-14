@@ -162,7 +162,7 @@
     <div class="flex h-full">
         <!-- Sidebar -->
         {% if session.get('user_id') %}
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-md transform transition-transform duration-300 ease-in-out md:translate-x-0 border-r border-gray-200 overflow-y-auto">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-md transform transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0 border-r border-gray-200 overflow-y-auto">
             <div class="flex items-center justify-between p-4 border-b border-gray-200">
                 <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
                     <i class="fas fa-file-invoice text-blue-600 text-2xl"></i>
@@ -242,11 +242,45 @@
         </aside>
         {% endif %}
         
+        <!-- Mobile Header - Only visible on small screens -->
+        <div class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-20 md:hidden">
+            <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center">
+                    <button id="openSidebar" class="text-gray-500 hover:text-gray-700 mr-3">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
+                        <i class="fas fa-file-invoice text-blue-600 text-xl"></i>
+                        <span class="text-lg font-semibold text-gray-800">ITR Management</span>
+                    </a>
+                </div>
+                {% if session.get('user_id') %}
+                <div class="flex items-center space-x-3">
+                    {% if not session.get('is_admin') %}
+                    <div class="relative">
+                        <button id="mobileNotificationButton" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-bell text-xl"></i>
+                            {% if notifications|default([])|selectattr('is_read', 'equalto', 0)|list|length > 0 %}
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                                {{ notifications|selectattr('is_read', 'equalto', 0)|list|length }}
+                            </span>
+                            {% endif %}
+                        </button>
+                    </div>
+                    {% endif %}
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+                        {{ session.get('username', 'U')[0]|upper }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
         <!-- Main Content -->
         <div class="flex-1 flex flex-col {% if session.get('user_id') %}md:ml-64{% endif %}">
-            <!-- Top Navigation Bar -->
+            <!-- Top Navigation Bar - Only visible on desktop -->
             {% if session.get('user_id') %}
-            <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+            <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10 hidden md:block">
                 <div class="flex items-center justify-between px-4 py-3">
                     <div class="flex items-center">
                         <button id="openSidebar" class="md:hidden text-gray-500 hover:text-gray-700 mr-3">
@@ -305,7 +339,7 @@
             {% endif %}
             
             <!-- Main Content Area -->
-            <main class="flex-1 p-4 overflow-auto">
+            <main class="flex-1 p-4 overflow-auto {% if session.get('user_id') %}mt-14 md:mt-0{% endif %}">
                 <!-- Flash Messages -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -331,7 +365,7 @@
             
             <!-- Footer -->
             <footer class="bg-white border-t border-gray-200 py-4 px-6 text-center text-sm text-gray-600">
-                <p>&copy; {{ now.year if now else '2023' }} ITR Management System. All rights reserved.</p>
+                <p>ITR Management System. All rights reserved to KodeMapa.</p>
             </footer>
         </div>
     </div>
@@ -365,20 +399,43 @@
             }
         }
         
-        // Mobile Sidebar Toggle
+        // Mobile Sidebar Toggle with overlay
         const sidebar = document.getElementById('sidebar');
         const openSidebar = document.getElementById('openSidebar');
         const closeSidebar = document.getElementById('closeSidebar');
-        
+        const sidebarOverlay = document.createElement('div');
+        sidebarOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden';
+        document.body.appendChild(sidebarOverlay);
+
         if (openSidebar && sidebar) {
             openSidebar.addEventListener('click', () => {
                 sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
             });
         }
-        
+
         if (closeSidebar && sidebar) {
             closeSidebar.addEventListener('click', () => {
                 sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            });
+        }
+
+        // Close sidebar when clicking overlay
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        });
+
+        // Mobile notification dropdown
+        const mobileNotificationButton = document.getElementById('mobileNotificationButton');
+        if (mobileNotificationButton && notificationDropdown) {
+            mobileNotificationButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('hidden');
             });
         }
         
