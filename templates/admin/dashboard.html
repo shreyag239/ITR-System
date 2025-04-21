@@ -1,223 +1,284 @@
 {% extends 'base.html' %}
 
 {% block title %}Admin Dashboard{% endblock %}
-{% block header_title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
-    <p class="text-gray-600">Manage clients, ITRs, and referrals</p>
-</div>
-
-<!-- Replace the stats cards section with this more responsive version -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
-        <div class="flex items-center">
-            <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                <i class="fas fa-users text-blue-600 text-xl"></i>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Clients</dt>
-                    <dd class="flex items-baseline">
-                        <div class="text-2xl font-semibold text-gray-900">{{ clients|length }}</div>
-                    </dd>
-                </dl>
-            </div>
+<div class="flex min-h-screen bg-gray-100">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-md hidden md:block">
+        <div class="p-6 bg-green-600 text-white">
+            <h2 class="text-xl font-bold">Admin Panel</h2>
         </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
-        <div class="flex items-center">
-            <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-                <i class="fas fa-file-invoice text-green-600 text-xl"></i>
+        <!-- Modify the sidebar to include a clients dropdown -->
+        <nav class="mt-6">
+            <div class="px-4 py-2 text-gray-500 uppercase text-xs font-semibold">MANAGEMENT</div>
+            <a href="{{ url_for('admin.dashboard') }}" class="flex items-center px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200">
+                <i class="fas fa-tachometer-alt mr-3"></i>
+                Dashboard
+            </a>
+            
+            <!-- Add Clients Dropdown -->
+            <div class="relative" id="clientsDropdown">
+                <button class="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 focus:outline-none">
+                    <i class="fas fa-users mr-3"></i>
+                    Clients
+                    <i class="fas fa-chevron-down ml-auto transition-transform duration-200"></i>
+                </button>
+                <div class="hidden pl-6 bg-gray-50 overflow-hidden max-h-0 transition-all duration-300" id="clientsDropdownContent">
+                    <!-- Client list will be populated here -->
+                    {% for client in clients %}
+                    <a href="{{ url_for('admin.client_details', client_id=client.id) }}" class="flex items-center px-6 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                            <span class="text-blue-600 text-xs font-medium">{{ client.full_name[0]|upper }}</span>
+                        </span>
+                        <span class="truncate">{{ client.full_name }}</span>
+                    </a>
+                    {% endfor %}
+                    <a href="{{ url_for('admin.add_new_client') }}" class="flex items-center px-6 py-2 text-sm text-green-600 hover:bg-gray-100">
+                        <i class="fas fa-plus-circle mr-2"></i> Add New Client
+                    </a>
+                </div>
             </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Completed ITRs</dt>
-                    <dd class="flex items-baseline">
-                        <div class="text-2xl font-semibold text-gray-900">
-                            {% set completed_itrs = namespace(count=0) %}
+            
+            <a href="{{ url_for('admin.referrals') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-share-alt mr-3"></i>
+                Referrals
+                {% if unread_referrals_count > 0 %}
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ unread_referrals_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('admin.notifications') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-bell mr-3"></i>
+                Notifications
+                {% if admin_notifications|length > 0 %}
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ admin_notifications|length }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('admin.add_new_client') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-user-plus mr-3"></i>
+                Add Client
+            </a>
+            
+            <div class="px-4 py-2 mt-6 text-gray-500 uppercase text-xs font-semibold">ACCOUNT</div>
+            <a href="{{ url_for('admin.logout') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-sign-out-alt mr-3"></i>
+                Logout
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1">
+        <!-- Mobile Header -->
+        <div class="md:hidden bg-white p-4 shadow-md flex justify-between items-center">
+            <h1 class="text-xl font-bold">Admin Dashboard</h1>
+            <button id="mobileSidebarToggle" class="text-gray-700 focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Sidebar -->
+        <div id="mobileSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden">
+            <div class="w-64 h-full bg-white shadow-md overflow-y-auto">
+                <div class="p-6 bg-green-600 text-white flex justify-between items-center">
+                    <h2 class="text-xl font-bold">Admin Panel</h2>
+                    <button id="closeMobileSidebar" class="text-white focus:outline-none">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <nav class="mt-6">
+                    <div class="px-4 py-2 text-gray-500 uppercase text-xs font-semibold">MANAGEMENT</div>
+                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200">
+                        <i class="fas fa-tachometer-alt mr-3"></i>
+                        Dashboard
+                    </a>
+                    
+                    <!-- Add Clients Dropdown for Mobile -->
+                    <div class="relative" id="mobileClientsDropdown">
+                        <button class="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 focus:outline-none">
+                            <i class="fas fa-users mr-3"></i>
+                            Clients
+                            <i class="fas fa-chevron-down ml-auto transition-transform duration-200"></i>
+                        </button>
+                        <div class="hidden pl-6 bg-gray-50 overflow-hidden max-h-0 transition-all duration-300" id="mobileClientsDropdownContent">
+                            <!-- Client list will be populated here -->
                             {% for client in clients %}
-                                {% if query_db is defined %}
-                                    {% set client_itrs = query_db('SELECT COUNT(*) as count FROM itr_records WHERE client_id = ? AND status = "Completed"', [client.id], one=True) %}
-                                    {% if client_itrs %}
-                                        {% set completed_itrs.count = completed_itrs.count + client_itrs.count %}
-                                    {% endif %}
-                                {% endif %}
+                            <a href="{{ url_for('admin.client_details', client_id=client.id) }}" class="flex items-center px-6 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <span class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                                    <span class="text-blue-600 text-xs font-medium">{{ client.full_name[0]|upper }}</span>
+                                </span>
+                                <span class="truncate">{{ client.full_name }}</span>
+                            </a>
                             {% endfor %}
-                            {{ completed_itrs.count }}
+                            <a href="{{ url_for('admin.add_new_client') }}" class="flex items-center px-6 py-2 text-sm text-green-600 hover:bg-gray-100">
+                                <i class="fas fa-plus-circle mr-2"></i> Add New Client
+                            </a>
                         </div>
-                    </dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
-        <div class="flex items-center">
-            <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
-                <i class="fas fa-share-alt text-yellow-600 text-xl"></i>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Pending Referrals</dt>
-                    <dd class="flex items-baseline">
-                        <div class="text-2xl font-semibold text-gray-900">{{ unread_referrals_count }}</div>
+                    </div>
+                    
+                    <a href="{{ url_for('admin.referrals') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-share-alt mr-3"></i>
+                        Referrals
                         {% if unread_referrals_count > 0 %}
-                        <div class="ml-2">
-                            <a href="{{ url_for('admin.referrals') }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                View
-                            </a>
-                        </div>
+                        <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ unread_referrals_count }}</span>
                         {% endif %}
-                    </dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
-        <div class="flex items-center">
-            <div class="flex-shrink-0 bg-red-100 rounded-md p-3">
-                <i class="fas fa-bell text-red-600 text-xl"></i>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Notifications</dt>
-                    <dd class="flex items-baseline">
-                        <div class="text-2xl font-semibold text-gray-900">{{ admin_notifications|length }}</div>
+                    </a>
+                    <a href="{{ url_for('admin.notifications') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-bell mr-3"></i>
+                        Notifications
                         {% if admin_notifications|length > 0 %}
-                        <div class="ml-2">
-                            <a href="{{ url_for('admin.notifications') }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                View
-                            </a>
-                        </div>
+                        <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ admin_notifications|length }}</span>
                         {% endif %}
-                    </dd>
-                </dl>
+                    </a>
+                    <a href="{{ url_for('admin.add_new_client') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-user-plus mr-3"></i>
+                        Add Client
+                    </a>
+                    
+                    <div class="px-4 py-2 mt-6 text-gray-500 uppercase text-xs font-semibold">ACCOUNT</div>
+                    <a href="{{ url_for('admin.logout') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-sign-out-alt mr-3"></i>
+                        Logout
+                    </a>
+                </nav>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Replace the recent notifications section with this more responsive version -->
-{% if admin_notifications %}
-<div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 mb-8 mt-6">
-    <div class="bg-blue-600 px-4 py-3 flex justify-between items-center">
-        <h2 class="text-lg font-semibold text-white">Recent Notifications</h2>
-        <a href="{{ url_for('admin.notifications') }}" class="text-sm text-white hover:text-blue-100">
-            View All
-        </a>
-    </div>
-    <div class="p-4">
-        <div class="space-y-3">
-            {% for notification in admin_notifications[:3] %}
-            <div class="flex items-start p-3 bg-gray-50 rounded-md">
-                <div class="flex-shrink-0 mt-0.5">
-                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full {{ 'bg-yellow-100' if notification.type == 'referral' else 'bg-green-100' }}">
-                        <i class="fas {{ 'fa-share-alt text-yellow-600' if notification.type == 'referral' else 'fa-user-plus text-green-600' }}"></i>
-                    </span>
-                </div>
-                <div class="ml-3 flex-1">
-                    <p class="text-sm text-gray-700">{{ notification.message }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ notification.created_at }}</p>
-                </div>
-                <div>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 'bg-yellow-100 text-yellow-800' if notification.type == 'referral' else 'bg-green-100 text-green-800' }}">
-                        {{ notification.type|capitalize }}
-                    </span>
-                </div>
+        
+        <!-- Content -->
+        <div class="p-6">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+                <p class="text-gray-600">Manage clients and referrals</p>
             </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
 
-<!-- Replace the clients table section with this more responsive version -->
-<div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-    <div class="bg-blue-600 px-4 py-3">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-            <h2 class="text-lg font-semibold text-white">Clients</h2>
-            <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-                <div class="relative w-full sm:w-auto">
-                    <input type="text" id="searchClients" placeholder="Search..." class="block w-full pl-10 pr-3 py-1.5 border border-blue-400 rounded-md bg-blue-500 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent sm:text-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-blue-300"></i>
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Clients</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900">{{ clients|length }}</div>
+                                </dd>
+                            </dl>
+                        </div>
                     </div>
                 </div>
-                <a href="{{ url_for('admin.add_new_client') }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full sm:w-auto justify-center sm:justify-start">
-                    <i class="fas fa-plus mr-1"></i> Add Client
-                </a>
+                
+                <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                            <i class="fas fa-share-alt text-yellow-600 text-xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Pending Referrals</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-semibold text-gray-900">{{ unread_referrals_count }}</div>
+                                    {% if unread_referrals_count > 0 %}
+                                    <div class="ml-2">
+                                        <a href="{{ url_for('admin.referrals') }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            View
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Table -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+                <div class="bg-blue-600 px-4 py-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                        <h2 class="text-lg font-semibold text-white">Clients</h2>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                            <div class="relative w-full sm:w-auto">
+                                <input type="text" id="searchClients" placeholder="Search..." class="block w-full pl-10 pr-3 py-1.5 border border-blue-400 rounded-md bg-blue-500 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent sm:text-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-blue-300"></i>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('admin.add_new_client') }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full sm:w-auto justify-center sm:justify-start">
+                                <i class="fas fa-plus mr-1"></i> Add Client
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                <th scope="col" class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PAN Number</th>
+                                <th scope="col" class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="clientsTable">
+                            {% for client in clients %}
+                            <tr class="client-row" data-name="{{ client.full_name }}" data-email="{{ client.email }}" data-phone="{{ client.phone }}">
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ client.id }}
+                                </td>
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <span class="text-blue-600 font-medium">{{ client.full_name[0]|upper }}</span>
+                                        </div>
+                                        <div class="ml-3 sm:ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ client.full_name }}</div>
+                                            <div class="text-xs text-gray-500 md:hidden">{{ client.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ client.email }}</div>
+                                    <div class="text-sm text-gray-500">{{ client.phone }}</div>
+                                </td>
+                                <td class="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ client.pan_number }}
+                                </td>
+                                <td class="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ client.created_at }}
+                                </td>
+                                <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex space-x-2">
+                                        <a href="{{ url_for('admin.client_details', client_id=client.id) }}" class="text-blue-600 hover:text-blue-900">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.edit_client', client_id=client.id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.add_new_itr', client_id=client.id) }}" class="text-green-600 hover:text-green-900">
+                                            <i class="fas fa-file-invoice"></i>
+                                        </a>
+                                        <button onclick="openNotifyModal({{ client.id }}, '{{ client.full_name }}')" class="text-yellow-600 hover:text-yellow-900">
+                                            <i class="fas fa-bell"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="px-3 sm:px-6 py-4 text-center text-sm text-gray-500">
+                                    No clients found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" class="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                    <th scope="col" class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PAN Number</th>
-                    <th scope="col" class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200" id="clientsTable">
-                {% for client in clients %}
-                <tr class="client-row" data-name="{{ client.full_name }}" data-email="{{ client.email }}" data-phone="{{ client.phone }}">
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ client.id }}
-                    </td>
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                <span class="text-blue-600 font-medium">{{ client.full_name[0]|upper }}</span>
-                            </div>
-                            <div class="ml-3 sm:ml-4">
-                                <div class="text-sm font-medium text-gray-900">{{ client.full_name }}</div>
-                                <div class="text-xs text-gray-500 md:hidden">{{ client.email }}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">{{ client.email }}</div>
-                        <div class="text-sm text-gray-500">{{ client.phone }}</div>
-                    </td>
-                    <td class="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ client.pan_number }}
-                    </td>
-                    <td class="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ client.created_at }}
-                    </td>
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div class="flex space-x-2">
-                            <a href="{{ url_for('admin.client_details', client_id=client.id) }}" class="text-blue-600 hover:text-blue-900">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ url_for('admin.edit_client', client_id=client.id) }}" class="text-indigo-600 hover:text-indigo-900">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{{ url_for('admin.add_new_itr', client_id=client.id) }}" class="text-green-600 hover:text-green-900">
-                                <i class="fas fa-file-invoice"></i>
-                            </a>
-                            <button type="button" onclick="openNotifyModal({{ client.id }}, '{{ client.full_name }}')" class="text-yellow-600 hover:text-yellow-900">
-                                <i class="fas fa-bell"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" class="px-3 sm:px-6 py-4 text-center text-sm text-gray-500">
-                        No clients found
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
 </div>
 
@@ -257,21 +318,23 @@
     const searchClients = document.getElementById('searchClients');
     const clientRows = document.querySelectorAll('.client-row');
     
-    searchClients.addEventListener('input', () => {
-        const searchValue = searchClients.value.toLowerCase();
-        
-        clientRows.forEach(row => {
-            const name = row.dataset.name.toLowerCase();
-            const email = row.dataset.email.toLowerCase();
-            const phone = row.dataset.phone.toLowerCase();
+    if (searchClients) {
+        searchClients.addEventListener('input', () => {
+            const searchValue = searchClients.value.toLowerCase();
             
-            if (name.includes(searchValue) || email.includes(searchValue) || phone.includes(searchValue)) {
-                row.classList.remove('hidden');
-            } else {
-                row.classList.add('hidden');
-            }
+            clientRows.forEach(row => {
+                const name = row.dataset.name.toLowerCase();
+                const email = row.dataset.email.toLowerCase();
+                const phone = row.dataset.phone.toLowerCase();
+                
+                if (name.includes(searchValue) || email.includes(searchValue) || phone.includes(searchValue)) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
         });
-    });
+    }
     
     // Notify Client Modal
     function openNotifyModal(clientId, clientName) {
@@ -284,6 +347,59 @@
         
         // Set form action
         document.getElementById('notifyForm').action = "{{ url_for('admin.send_notification', client_id=0) }}".replace('0', clientId);
+    }
+    
+    // Mobile sidebar toggle
+    document.getElementById('mobileSidebarToggle').addEventListener('click', function() {
+        document.getElementById('mobileSidebar').classList.remove('hidden');
+    });
+
+    document.getElementById('closeMobileSidebar').addEventListener('click', function() {
+        document.getElementById('mobileSidebar').classList.add('hidden');
+    });
+    
+    // Clients dropdown functionality
+    const clientsDropdown = document.getElementById('clientsDropdown');
+    const clientsDropdownContent = document.getElementById('clientsDropdownContent');
+    const mobileClientsDropdown = document.getElementById('mobileClientsDropdown');
+    const mobileClientsDropdownContent = document.getElementById('mobileClientsDropdownContent');
+    
+    if (clientsDropdown && clientsDropdownContent) {
+        clientsDropdown.querySelector('button').addEventListener('click', function() {
+            const icon = this.querySelector('.fa-chevron-down');
+            icon.classList.toggle('rotate-180');
+            
+            if (clientsDropdownContent.classList.contains('hidden')) {
+                clientsDropdownContent.classList.remove('hidden');
+                setTimeout(() => {
+                    clientsDropdownContent.style.maxHeight = clientsDropdownContent.scrollHeight + 'px';
+                }, 10);
+            } else {
+                clientsDropdownContent.style.maxHeight = '0';
+                setTimeout(() => {
+                    clientsDropdownContent.classList.add('hidden');
+                }, 300);
+            }
+        });
+    }
+    
+    if (mobileClientsDropdown && mobileClientsDropdownContent) {
+        mobileClientsDropdown.querySelector('button').addEventListener('click', function() {
+            const icon = this.querySelector('.fa-chevron-down');
+            icon.classList.toggle('rotate-180');
+            
+            if (mobileClientsDropdownContent.classList.contains('hidden')) {
+                mobileClientsDropdownContent.classList.remove('hidden');
+                setTimeout(() => {
+                    mobileClientsDropdownContent.style.maxHeight = mobileClientsDropdownContent.scrollHeight + 'px';
+                }, 10);
+            } else {
+                mobileClientsDropdownContent.style.maxHeight = '0';
+                setTimeout(() => {
+                    mobileClientsDropdownContent.classList.add('hidden');
+                }, 300);
+            }
+        });
     }
 </script>
 {% endblock %}

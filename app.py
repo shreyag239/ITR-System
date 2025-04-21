@@ -114,6 +114,11 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 def utility_processor():
     return dict(query_db=query_db)
 
+# Add datetime to template context
+@app.context_processor
+def inject_now():
+    return {'now': datetime.now()}
+
 # Set template folder explicitly and print for debugging
 app.template_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 print(f"Template folder: {app.template_folder}")
@@ -435,16 +440,70 @@ def send_notification(client_id):
 
     return redirect(url_for('admin.client_details', client_id=client_id))
 
+@admin_bp.route('/client/<int:client_id>/delete', methods=['POST'])
+@admin_required
+def delete_client(client_id):
+    # Get the client to be deleted
+    client = query_db('SELECT * FROM clients WHERE id = ?', [client_id], one=True)
+    
+    if not client:
+        flash('Client not found.', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    # Begin transaction to ensure all related data is deleted
+    db = get_db()
+    try:
+        # Delete all ITR records for this client
+        db.execute('DELETE FROM itr_records WHERE client_id = ?', [client_id])
+        
+        # Delete all notifications for this client
+        db.execute('DELETE FROM notifications WHERE client_id = ?', [client_id])
+        
+        # Delete all referrals made by this client
+        db.execute('DELETE FROM referrals WHERE client_id = ?', [client_id])
+        
+        # Update any referrals where this client was referred (set referred_client_id to NULL)
+        db.execute('UPDATE referrals SET referred_client_id = NULL WHERE referred_client_id = ?', [client_id])
+        
+        # Get user_id to delete the user account if it exists
+        user_id = client['user_id']
+        
+        # Delete the client
+        db.execute('DELETE FROM clients WHERE id = ?', [client_id])
+        
+        # Delete the user account if it exists and is not an admin
+        if user_id:
+            # Check if user is not an admin before deleting
+            user = query_db('SELECT * FROM users WHERE id = ? AND is_admin = 0', [user_id], one=True)
+            if user:
+                db.execute('DELETE FROM users WHERE id = ? AND is_admin = 0', [user_id])
+        
+        # Commit all changes
+        db.commit()
+        
+        flash(f'Client {client["full_name"]} has been deleted successfully.', 'success')
+    except Exception as e:
+        # Rollback in case of error
+        db.rollback()
+        flash(f'Error deleting client: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.dashboard'))
+
+# Add this function to your app.py to modify the referrals query
+
 @admin_bp.route('/referrals')
 @admin_required
 def referrals():
     # Get all referrals with client and referred person details
+    # Include a flag to identify public referrals (those made without login)
     referrals = query_db(
         '''SELECT r.*, c.full_name as client_name, 
            CASE WHEN r.referred_client_id IS NOT NULL THEN rc.full_name ELSE r.referred_name END as referred_name,
-           CASE WHEN r.referred_client_id IS NOT NULL THEN 1 ELSE 0 END as is_registered
+           CASE WHEN r.referred_client_id IS NOT NULL THEN 1 ELSE 0 END as is_registered,
+           CASE WHEN u.username = u.email THEN 1 ELSE 0 END as is_public
            FROM referrals r 
            JOIN clients c ON r.client_id = c.id
+           JOIN users u ON c.user_id = u.id
            LEFT JOIN clients rc ON r.referred_client_id = rc.id
            ORDER BY r.created_at DESC'''
     )
@@ -819,6 +878,83 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
+
+# Add this route to your app.py file
+
+@app.route('/public-refer', methods=['GET', 'POST'])
+def public_refer():
+    success = False
+    
+    if request.method == 'POST':
+        # Get form data
+        referrer_name = request.form.get('referrer_name')
+        referrer_email = request.form.get('referrer_email')
+        referrer_phone = request.form.get('referrer_phone')
+        referred_name = request.form.get('referred_name')
+        referred_email = request.form.get('referred_email')
+        referred_phone = request.form.get('referred_phone')
+        message = request.form.get('message', '')
+        
+        try:
+            # Create a temporary referrer record or find existing client with same email
+            client = query_db('SELECT * FROM clients WHERE email = ?', [referrer_email], one=True)
+            client_id = None
+            
+            if client:
+                # Use existing client
+                client_id = client['id']
+            else:
+                # Create a temporary client entry for the referrer
+                user_id = insert_db(
+                    'INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)',
+                    [referrer_email, str(uuid.uuid4()), 0]  # Generate random password
+                )
+                
+                if user_id:
+                    # Generate referral code
+                    referral_code = str(uuid.uuid4())[:8]
+                    
+                    # Create client profile
+                    client_id = insert_db(
+                        'INSERT INTO clients (user_id, full_name, email, phone, referral_code) VALUES (?, ?, ?, ?, ?)',
+                        [user_id, referrer_name, referrer_email, referrer_phone, referral_code]
+                    )
+            
+            if client_id:
+                # Add referral to database
+                referral_id = insert_db(
+                    '''INSERT INTO referrals 
+                       (client_id, referred_name, referred_email, referred_phone) 
+                       VALUES (?, ?, ?, ?)''',
+                    [client_id, referred_name, referred_email, referred_phone]
+                )
+                
+                if referral_id:
+                    # Add admin notification
+                    insert_db(
+                        '''INSERT INTO admin_notifications 
+                           (message, type, related_id) 
+                           VALUES (?, ?, ?)''',
+                        [f"Public referral: {referrer_name} ({referrer_email}) has referred {referred_name} ({referred_email})", 
+                         'referral', 
+                         referral_id]
+                    )
+                    
+                    success = True
+                    flash('Thank you for your referral! We will contact them soon.', 'success')
+                else:
+                    flash('Error adding referral. Please try again.', 'error')
+            else:
+                flash('Error processing your information. Please try again.', 'error')
+                
+        except Exception as e:
+            print(f"Error in public referral: {str(e)}")
+            if DEBUG:
+                import traceback
+                traceback.print_exc()
+            flash('An error occurred. Please try again later.', 'error')
+    
+    return render_template('public_refer.html', success=success)
 
 # Create schema.sql if it doesn't exist
 def create_schema_file():

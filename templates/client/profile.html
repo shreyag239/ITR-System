@@ -34,13 +34,6 @@
                                     {{ referrals_count.count if referrals_count else 0 }}
                                 </span>
                             </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200">
-                                <span class="text-sm font-medium text-gray-500">ITR Records</span>
-                                <span class="text-sm font-medium text-gray-900">
-                                    {% set itr_count = query_db('SELECT COUNT(*) as count FROM itr_records WHERE client_id = ?', [client.id], one=True) %}
-                                    {{ itr_count.count if itr_count else 0 }}
-                                </span>
-                            </div>
                         </div>
                     </div>
                 </div>

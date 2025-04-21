@@ -68,29 +68,22 @@
     
     <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
         <div class="flex items-center">
-            <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
-                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+            <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                <i class="fas fa-globe text-purple-600 text-xl"></i>
             </div>
             <div class="ml-5 w-0 flex-1">
                 <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Pending Review</dt>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Public Referrals</dt>
                     <dd class="flex items-baseline">
                         <div class="text-2xl font-semibold text-gray-900">
-                            {% set unreviewed_count = 0 %}
+                            {% set public_count = 0 %}
                             {% for referral in referrals %}
-                                {% if not referral.is_reviewed %}
-                                    {% set unreviewed_count = unreviewed_count + 1 %}
+                                {% if referral.is_public %}
+                                    {% set public_count = public_count + 1 %}
                                 {% endif %}
                             {% endfor %}
-                            {{ unreviewed_count }}
+                            {{ public_count }}
                         </div>
-                        {% if unreviewed_count > 0 %}
-                        <div class="ml-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                Attention Needed
-                            </span>
-                        </div>
-                        {% endif %}
                     </dd>
                 </dl>
             </div>
@@ -115,6 +108,7 @@
                     <option value="registered">Registered</option>
                     <option value="pending">Pending</option>
                     <option value="unreviewed">Unreviewed</option>
+                    <option value="public">Public Referrals</option>
                 </select>
             </div>
         </div>
@@ -133,14 +127,20 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200" id="referralsTable">
                 {% for referral in referrals %}
-                <tr class="referral-row {% if not referral.is_reviewed %}bg-yellow-50{% endif %}" 
+                <tr class="referral-row {% if not referral.is_reviewed %}bg-yellow-50{% endif %} {% if referral.is_public %}bg-purple-50{% endif %}" 
                     data-referrer="{{ referral.client_name }}" 
                     data-referred="{{ referral.referred_name }}" 
                     data-email="{{ referral.referred_email }}" 
                     data-status="{% if referral.is_registered %}registered{% else %}pending{% endif %}"
-                    data-reviewed="{% if referral.is_reviewed %}reviewed{% else %}unreviewed{% endif %}">
+                    data-reviewed="{% if referral.is_reviewed %}reviewed{% else %}unreviewed{% endif %}"
+                    data-public="{% if referral.is_public %}public{% else %}regular{% endif %}">
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">{{ referral.client_name }}</div>
+                        {% if referral.is_public %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            Public
+                        </span>
+                        {% endif %}
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900">{{ referral.referred_name }}</div>
@@ -199,6 +199,7 @@
             const email = row.dataset.email.toLowerCase();
             const status = row.dataset.status;
             const reviewed = row.dataset.reviewed;
+            const isPublic = row.dataset.public;
             
             const searchMatch = referrer.includes(searchValue) || 
                                referred.includes(searchValue) || 
@@ -209,6 +210,8 @@
                 statusMatch = status === statusValue;
             } else if (statusValue === 'unreviewed') {
                 statusMatch = reviewed === 'unreviewed';
+            } else if (statusValue === 'public') {
+                statusMatch = isPublic === 'public';
             }
             
             if (searchMatch && statusMatch) {
