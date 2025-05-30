@@ -4,12 +4,11 @@
 
 {% block content %}
 <div class="flex min-h-screen bg-gray-100">
-    <!-- Sidebar -->
-    <div class="w-64 bg-white shadow-md hidden md:block">
+    <!-- Sidebar - Hidden on mobile, shown on desktop -->
+    <div class="w-64 bg-white shadow-md hidden lg:block">
         <div class="p-6 bg-green-600 text-white">
             <h2 class="text-xl font-bold">Admin Panel</h2>
         </div>
-        <!-- Modify the sidebar to include a clients dropdown -->
         <nav class="mt-6">
             <div class="px-4 py-2 text-gray-500 uppercase text-xs font-semibold">MANAGEMENT</div>
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200">
@@ -17,15 +16,14 @@
                 Dashboard
             </a>
             
-            <!-- Add Clients Dropdown -->
+            <!-- Active Clients Dropdown -->
             <div class="relative" id="clientsDropdown">
                 <button class="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 focus:outline-none">
                     <i class="fas fa-users mr-3"></i>
-                    Clients
+                    Active Clients
                     <i class="fas fa-chevron-down ml-auto transition-transform duration-200"></i>
                 </button>
                 <div class="hidden pl-6 bg-gray-50 overflow-hidden max-h-0 transition-all duration-300" id="clientsDropdownContent">
-                    <!-- Client list will be populated here -->
                     {% for client in clients %}
                     <a href="{{ url_for('admin.client_details', client_id=client.id) }}" class="flex items-center px-6 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <span class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
@@ -40,6 +38,15 @@
                 </div>
             </div>
             
+            <!-- Inactive Clients Section -->
+            <a href="{{ url_for('admin.inactive_clients') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                <i class="fas fa-user-slash mr-3"></i>
+                Inactive Clients
+                {% if total_inactive_clients > 0 %}
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ total_inactive_clients }}</span>
+                {% endif %}
+            </a>
+            
             <a href="{{ url_for('admin.referrals') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
                 <i class="fas fa-share-alt mr-3"></i>
                 Referrals
@@ -50,8 +57,8 @@
             <a href="{{ url_for('admin.notifications') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
                 <i class="fas fa-bell mr-3"></i>
                 Notifications
-                {% if admin_notifications|length > 0 %}
-                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ admin_notifications|length }}</span>
+                {% if admin_notifications_count > 0 %}
+                <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ admin_notifications_count }}</span>
                 {% endif %}
             </a>
             <a href="{{ url_for('admin.add_new_client') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
@@ -68,17 +75,17 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1">
+    <div class="flex-1 min-w-0">
         <!-- Mobile Header -->
-        <div class="md:hidden bg-white p-4 shadow-md flex justify-between items-center">
-            <h1 class="text-xl font-bold">Admin Dashboard</h1>
-            <button id="mobileSidebarToggle" class="text-gray-700 focus:outline-none">
-                <i class="fas fa-bars"></i>
+        <div class="lg:hidden bg-white p-4 shadow-md flex justify-between items-center">
+            <h1 class="text-lg font-bold truncate">Admin Dashboard</h1>
+            <button id="mobileSidebarToggle" class="text-gray-700 focus:outline-none p-2">
+                <i class="fas fa-bars text-xl"></i>
             </button>
         </div>
         
-        <!-- Mobile Sidebar -->
-        <div id="mobileSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden">
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobileSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden lg:hidden">
             <div class="w-64 h-full bg-white shadow-md overflow-y-auto">
                 <div class="p-6 bg-green-600 text-white flex justify-between items-center">
                     <h2 class="text-xl font-bold">Admin Panel</h2>
@@ -93,15 +100,14 @@
                         Dashboard
                     </a>
                     
-                    <!-- Add Clients Dropdown for Mobile -->
+                    <!-- Mobile Active Clients Dropdown -->
                     <div class="relative" id="mobileClientsDropdown">
                         <button class="w-full flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 focus:outline-none">
                             <i class="fas fa-users mr-3"></i>
-                            Clients
+                            Active Clients
                             <i class="fas fa-chevron-down ml-auto transition-transform duration-200"></i>
                         </button>
                         <div class="hidden pl-6 bg-gray-50 overflow-hidden max-h-0 transition-all duration-300" id="mobileClientsDropdownContent">
-                            <!-- Client list will be populated here -->
                             {% for client in clients %}
                             <a href="{{ url_for('admin.client_details', client_id=client.id) }}" class="flex items-center px-6 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <span class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
@@ -116,6 +122,15 @@
                         </div>
                     </div>
                     
+                    <!-- Mobile Inactive Clients Section -->
+                    <a href="{{ url_for('admin.inactive_clients') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-user-slash mr-3"></i>
+                        Inactive Clients
+                        {% if total_inactive_clients > 0 %}
+                        <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ total_inactive_clients }}</span>
+                        {% endif %}
+                    </a>
+                    
                     <a href="{{ url_for('admin.referrals') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-share-alt mr-3"></i>
                         Referrals
@@ -126,8 +141,8 @@
                     <a href="{{ url_for('admin.notifications') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
                         <i class="fas fa-bell mr-3"></i>
                         Notifications
-                        {% if admin_notifications|length > 0 %}
-                        <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ admin_notifications|length }}</span>
+                        {% if admin_notifications_count > 0 %}
+                        <span class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{{ admin_notifications_count }}</span>
                         {% endif %}
                     </a>
                     <a href="{{ url_for('admin.add_new_client') }}" class="flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100">
@@ -145,43 +160,44 @@
         </div>
         
         <!-- Content -->
-        <div class="p-6">
-            <div class="mb-6">
+        <div class="p-3 sm:p-6">
+            <!-- Desktop Header -->
+            <div class="hidden lg:block mb-6">
                 <h1 class="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
                 <p class="text-gray-600">Manage clients and referrals</p>
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                <div class="bg-white rounded-lg shadow-md p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        <div class="flex-shrink-0 bg-blue-100 rounded-md p-2 sm:p-3">
+                            <i class="fas fa-users text-blue-600 text-lg sm:text-xl"></i>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
+                        <div class="ml-3 sm:ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Clients</dt>
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500 truncate">Active Clients</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">{{ clients|length }}</div>
+                                    <div class="text-lg sm:text-2xl font-semibold text-gray-900">{{ total_clients }}</div>
                                 </dd>
                             </dl>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
+                <div class="bg-white rounded-lg shadow-md p-3 sm:p-6 border border-gray-200">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
-                            <i class="fas fa-share-alt text-yellow-600 text-xl"></i>
+                        <div class="flex-shrink-0 bg-red-100 rounded-md p-2 sm:p-3">
+                            <i class="fas fa-user-slash text-red-600 text-lg sm:text-xl"></i>
                         </div>
-                        <div class="ml-5 w-0 flex-1">
+                        <div class="ml-3 sm:ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Pending Referrals</dt>
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500 truncate">Inactive</dt>
                                 <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900">{{ unread_referrals_count }}</div>
-                                    {% if unread_referrals_count > 0 %}
+                                    <div class="text-lg sm:text-2xl font-semibold text-gray-900">{{ total_inactive_clients }}</div>
+                                    {% if total_inactive_clients > 0 %}
                                     <div class="ml-2">
-                                        <a href="{{ url_for('admin.referrals') }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        <a href="{{ url_for('admin.inactive_clients') }}" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                             View
                                         </a>
                                     </div>
@@ -191,13 +207,52 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-3 sm:p-6 border border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-yellow-100 rounded-md p-2 sm:p-3">
+                            <i class="fas fa-share-alt text-yellow-600 text-lg sm:text-xl"></i>
+                        </div>
+                        <div class="ml-3 sm:ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500 truncate">Pending</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-lg sm:text-2xl font-semibold text-gray-900">{{ unread_referrals_count }}</div>
+                                    {% if unread_referrals_count > 0 %}
+                                    <div class="ml-2">
+                                        <a href="{{ url_for('admin.referrals') }}" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            View
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-3 sm:p-6 border border-gray-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-green-100 rounded-md p-2 sm:p-3">
+                            <i class="fas fa-file-invoice text-green-600 text-lg sm:text-xl"></i>
+                        </div>
+                        <div class="ml-3 sm:ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-xs sm:text-sm font-medium text-gray-500 truncate">Total Referrals</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-lg sm:text-2xl font-semibold text-gray-900">{{ total_referrals }}</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Clients Table -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-                <div class="bg-blue-600 px-4 py-3">
+                <div class="bg-blue-600 px-3 sm:px-4 py-3">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-                        <h2 class="text-lg font-semibold text-white">Clients</h2>
+                        <h2 class="text-lg font-semibold text-white">Active Clients</h2>
                         <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
                             <div class="relative w-full sm:w-auto">
                                 <input type="text" id="searchClients" placeholder="Search..." class="block w-full pl-10 pr-3 py-1.5 border border-blue-400 rounded-md bg-blue-500 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent sm:text-sm">
@@ -232,11 +287,12 @@
                                 <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                            <span class="text-blue-600 font-medium">{{ client.full_name[0]|upper }}</span>
+                                            <span class="text-blue-600 font-medium text-sm">{{ client.full_name[0]|upper }}</span>
                                         </div>
                                         <div class="ml-3 sm:ml-4">
                                             <div class="text-sm font-medium text-gray-900">{{ client.full_name }}</div>
                                             <div class="text-xs text-gray-500 md:hidden">{{ client.email }}</div>
+                                            <div class="text-xs text-gray-500 md:hidden">{{ client.phone }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -248,29 +304,34 @@
                                     {{ client.pan_number }}
                                 </td>
                                 <td class="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ client.created_at }}
+                                    {{ client.created_at.split(' ')[0] if client.created_at else 'N/A' }}
                                 </td>
                                 <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
-                                        <a href="{{ url_for('admin.client_details', client_id=client.id) }}" class="text-blue-600 hover:text-blue-900">
+                                    <div class="flex space-x-1 sm:space-x-2">
+                                        <a href="{{ url_for('admin.client_details', client_id=client.id) }}" class="text-blue-600 hover:text-blue-900 p-1" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ url_for('admin.edit_client', client_id=client.id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                        <a href="{{ url_for('admin.edit_client', client_id=client.id) }}" class="text-indigo-600 hover:text-indigo-900 p-1" title="Edit Client">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{{ url_for('admin.add_new_itr', client_id=client.id) }}" class="text-green-600 hover:text-green-900">
+                                        <a href="{{ url_for('admin.add_new_itr', client_id=client.id) }}" class="text-green-600 hover:text-green-900 p-1" title="Add ITR">
                                             <i class="fas fa-file-invoice"></i>
                                         </a>
-                                        <button onclick="openNotifyModal({{ client.id }}, '{{ client.full_name }}')" class="text-yellow-600 hover:text-yellow-900">
+                                        <button onclick="openNotifyModal({{ client.id }}, '{{ client.full_name }}')" class="text-yellow-600 hover:text-yellow-900 p-1" title="Send Notification">
                                             <i class="fas fa-bell"></i>
                                         </button>
+                                        <form method="post" action="{{ url_for('admin.deactivate_client', client_id=client.id) }}" class="inline-block">
+                                            <button type="submit" class="text-red-600 hover:text-red-900 p-1" title="Deactivate Client" onclick="return confirm('Are you sure you want to deactivate this client? They will be moved to inactive clients.')">
+                                                <i class="fas fa-user-slash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
                                 <td colspan="6" class="px-3 sm:px-6 py-4 text-center text-sm text-gray-500">
-                                    No clients found
+                                    No active clients found
                                 </td>
                             </tr>
                             {% endfor %}
@@ -350,13 +411,30 @@
     }
     
     // Mobile sidebar toggle
-    document.getElementById('mobileSidebarToggle').addEventListener('click', function() {
-        document.getElementById('mobileSidebar').classList.remove('hidden');
-    });
+    const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+    const mobileSidebar = document.getElementById('mobileSidebar');
+    const closeMobileSidebar = document.getElementById('closeMobileSidebar');
+    
+    if (mobileSidebarToggle) {
+        mobileSidebarToggle.addEventListener('click', function() {
+            mobileSidebar.classList.remove('hidden');
+        });
+    }
 
-    document.getElementById('closeMobileSidebar').addEventListener('click', function() {
-        document.getElementById('mobileSidebar').classList.add('hidden');
-    });
+    if (closeMobileSidebar) {
+        closeMobileSidebar.addEventListener('click', function() {
+            mobileSidebar.classList.add('hidden');
+        });
+    }
+    
+    // Close mobile sidebar when clicking outside
+    if (mobileSidebar) {
+        mobileSidebar.addEventListener('click', function(e) {
+            if (e.target === mobileSidebar) {
+                mobileSidebar.classList.add('hidden');
+            }
+        });
+    }
     
     // Clients dropdown functionality
     const clientsDropdown = document.getElementById('clientsDropdown');

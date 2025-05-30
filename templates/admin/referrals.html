@@ -1,229 +1,358 @@
 {% extends 'base.html' %}
 
-{% block title %}Referrals{% endblock %}
-{% block header_title %}Referral Management{% endblock %}
+{% block title %}Referrals Management{% endblock %}
 
 {% block content %}
-<div class="mb-6 flex justify-between items-center">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-800">Referrals</h1>
-        <p class="text-gray-600">Manage and track client referrals</p>
+<div class="container-fluid px-3 sm:px-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
+        <h2 class="text-xl sm:text-2xl font-bold"><i class="bi bi-share me-2"></i>Referrals Management</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary">
+            <i class="bi bi-speedometer2 me-1"></i>Back to Dashboard
+        </a>
     </div>
-    <a href="{{ url_for('admin.dashboard') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-        <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
-    </a>
-</div>
 
-<!-- Replace the referral stats section with this more responsive version -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
-        <div class="flex items-center">
-            <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                <i class="fas fa-share-alt text-blue-600 text-xl"></i>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Referrals</dt>
-                    <dd class="flex items-baseline">
-                        <div class="text-2xl font-semibold text-gray-900">{{ referrals|length }}</div>
-                    </dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
-        <div class="flex items-center">
-            <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-                <i class="fas fa-user-check text-green-600 text-xl"></i>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Converted</dt>
-                    <dd class="flex items-baseline">
-                        <div class="text-2xl font-semibold text-gray-900">
-                            {% set registered_count = 0 %}
-                            {% for referral in referrals %}
-                                {% if referral.is_registered %}
-                                    {% set registered_count = registered_count + 1 %}
-                                {% endif %}
-                            {% endfor %}
-                            {{ registered_count }}
-                        </div>
-                        <div class="ml-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {% if referrals|length > 0 %}
-                                    {% set percentage = (registered_count / referrals|length * 100)|round|int %}
-                                    {{ percentage }}%
-                                {% else %}
-                                    0%
-                                {% endif %}
-                            </span>
-                        </div>
-                    </dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 border border-gray-200">
-        <div class="flex items-center">
-            <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
-                <i class="fas fa-globe text-purple-600 text-xl"></i>
-            </div>
-            <div class="ml-5 w-0 flex-1">
-                <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Public Referrals</dt>
-                    <dd class="flex items-baseline">
-                        <div class="text-2xl font-semibold text-gray-900">
-                            {% set public_count = 0 %}
-                            {% for referral in referrals %}
-                                {% if referral.is_public %}
-                                    {% set public_count = public_count + 1 %}
-                                {% endif %}
-                            {% endfor %}
-                            {{ public_count }}
-                        </div>
-                    </dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Replace the referrals table section with this more responsive version -->
-<div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-    <div class="bg-blue-600 px-4 py-3">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-            <h2 class="text-lg font-semibold text-white">All Referrals</h2>
-            <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-                <div class="relative w-full sm:w-auto">
-                    <input type="text" id="searchReferrals" placeholder="Search..." class="block w-full pl-10 pr-3 py-1.5 border border-blue-400 rounded-md bg-blue-500 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent sm:text-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-blue-300"></i>
-                    </div>
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center p-3">
+                    <h4 class="mb-0 fs-5 fs-md-4">{{ stats.total }}</h4>
+                    <p class="mb-0 small">Total Referrals</p>
                 </div>
-                <select id="statusFilter" class="block w-full sm:w-auto pl-3 pr-10 py-1.5 border border-blue-400 rounded-md bg-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent sm:text-sm">
-                    <option value="">All Status</option>
-                    <option value="registered">Registered</option>
-                    <option value="pending">Pending</option>
-                    <option value="unreviewed">Unreviewed</option>
-                    <option value="public">Public Referrals</option>
-                </select>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body text-center p-3">
+                    <h4 class="mb-0 fs-5 fs-md-4">{{ stats.pending }}</h4>
+                    <p class="mb-0 small">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center p-3">
+                    <h4 class="mb-0 fs-5 fs-md-4">{{ stats.contacted }}</h4>
+                    <p class="mb-0 small">Contacted</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center p-3">
+                    <h4 class="mb-0 fs-5 fs-md-4">{{ stats.converted }}</h4>
+                    <p class="mb-0 small">Converted</p>
+                </div>
             </div>
         </div>
     </div>
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referrer</th>
-                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referred Person</th>
-                    <th scope="col" class="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                    <th scope="col" class="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200" id="referralsTable">
-                {% for referral in referrals %}
-                <tr class="referral-row {% if not referral.is_reviewed %}bg-yellow-50{% endif %} {% if referral.is_public %}bg-purple-50{% endif %}" 
-                    data-referrer="{{ referral.client_name }}" 
-                    data-referred="{{ referral.referred_name }}" 
-                    data-email="{{ referral.referred_email }}" 
-                    data-status="{% if referral.is_registered %}registered{% else %}pending{% endif %}"
-                    data-reviewed="{% if referral.is_reviewed %}reviewed{% else %}unreviewed{% endif %}"
-                    data-public="{% if referral.is_public %}public{% else %}regular{% endif %}">
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ referral.client_name }}</div>
-                        {% if referral.is_public %}
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            Public
-                        </span>
-                        {% endif %}
-                    </td>
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-gray-900">{{ referral.referred_name }}</div>
-                        <div class="text-xs text-gray-500 md:hidden">{{ referral.referred_email }}</div>
-                    </td>
-                    <td class="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-900">{{ referral.referred_email }}</div>
-                        <div class="text-sm text-gray-500">{{ referral.referred_phone }}</div>
-                    </td>
-                    <td class="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ referral.created_at }}
-                    </td>
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if referral.is_registered %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                            {% if referral.is_registered %}Registered{% else %}Pending{% endif %}
-                        </span>
-                    </td>
-                    <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {% if not referral.is_reviewed %}
-                        <form method="post" action="{{ url_for('admin.review_referral', referral_id=referral.id) }}" class="inline-block">
-                            <button type="submit" class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                <i class="fas fa-check mr-1 sm:mr-2"></i><span class="hidden sm:inline">Review</span>
-                            </button>
-                        </form>
+
+    <!-- Referrals Table -->
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">All Referrals ({{ referrals|length }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-2 px-sm-3">Referrer</th>
+                            <th class="px-2 px-sm-3">Referred Person</th>
+                            <th class="d-none d-md-table-cell px-2 px-sm-3">Contact Info</th>
+                            <th class="d-none d-lg-table-cell px-2 px-sm-3">Date</th>
+                            <th class="px-2 px-sm-3">Status</th>
+                            <th class="px-2 px-sm-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for referral in referrals %}
+                        <tr id="referral-row-{{ referral.id }}" class="{% if not referral.is_reviewed %}table-warning{% endif %}">
+                            <td class="px-2 px-sm-3 py-3">
+                                <strong class="d-block text-truncate">{{ referral.client_name or 'Unknown' }}</strong>
+                            </td>
+                            <td class="px-2 px-sm-3 py-3">
+                                <div>
+                                    <strong class="d-block">{{ referral.referred_name }}</strong>
+                                    {% if referral.referred_client_id %}
+                                    <span class="badge bg-success">Registered</span>
+                                    {% endif %}
+                                    <!-- Mobile contact info -->
+                                    <div class="d-md-none mt-1">
+                                        <small class="text-muted d-block">
+                                            <i class="bi bi-envelope me-1"></i>{{ referral.referred_email }}
+                                        </small>
+                                        {% if referral.referred_phone %}
+                                        <small class="text-muted d-block">
+                                            <i class="bi bi-telephone me-1"></i>{{ referral.referred_phone }}
+                                        </small>
+                                        {% endif %}
+                                        <small class="text-muted d-lg-none d-block">{{ referral.created_at }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="d-none d-md-table-cell px-2 px-sm-3 py-3">
+                                <div class="small">
+                                    <div class="text-truncate"><i class="bi bi-envelope me-1"></i>{{ referral.referred_email }}</div>
+                                    {% if referral.referred_phone %}
+                                    <div><i class="bi bi-telephone me-1"></i>{{ referral.referred_phone }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="d-none d-lg-table-cell px-2 px-sm-3 py-3">
+                                <small>{{ referral.created_at }}</small>
+                            </td>
+                            <td class="px-2 px-sm-3 py-3">
+                                {% if referral.status %}
+                                <span id="status-badge-{{ referral.id }}" class="badge bg-{{ 'success' if referral.status == 'Converted' else 'primary' if referral.status == 'Contacted' else 'warning' if referral.status == 'Pending' else 'danger' }}">
+                                    {{ referral.status }}
+                                </span>
+                                {% else %}
+                                <span id="status-badge-{{ referral.id }}" class="badge bg-secondary">No Status</span>
+                                {% endif %}
+
+                                {% if not referral.is_read and not referral.is_reviewed %}
+                                <span class="badge bg-danger d-block mt-1">Unread</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-2 px-sm-3 py-3">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-gear"></i>
+                                        <span class="d-none d-sm-inline ms-1">Actions</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><h6 class="dropdown-header">Update Status</h6></li>
+                                        <li>
+                                            <button class="dropdown-item" type="button" onclick="updateReferralStatus({{ referral.id }}, 'Pending')">
+                                                <i class="bi bi-clock text-warning me-2"></i>Pending
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" type="button" onclick="updateReferralStatus({{ referral.id }}, 'Contacted')">
+                                                <i class="bi bi-telephone text-info me-2"></i>Contacted
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" type="button" onclick="updateReferralStatus({{ referral.id }}, 'Converted')">
+                                                <i class="bi bi-check-circle text-success me-2"></i>Converted
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item" type="button" onclick="updateReferralStatus({{ referral.id }}, 'Rejected')">
+                                                <i class="bi bi-x-circle text-danger me-2"></i>Rejected
+                                            </button>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        {% if not referral.is_read and not referral.is_reviewed %}
+                                        <li>
+                                            <button class="dropdown-item" onclick="markAsRead({{ referral.id }})">
+                                                <i class="bi bi-check-circle text-success me-2"></i>Mark as Read
+                                            </button>
+                                        </li>
+                                        {% endif %}
+                                        {% if not referral.is_reviewed %}
+                                        <li>
+                                            <form method="post" action="{{ url_for('admin.review_referral', referral_id=referral.id) }}" class="d-inline">
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="bi bi-eye-check text-info me-2"></i>Mark as Reviewed
+                                                </button>
+                                            </form>
+                                        </li>
+                                        {% endif %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button class="dropdown-item text-danger" onclick="deleteReferral({{ referral.id }})">
+                                                <i class="bi bi-trash me-2"></i>Delete
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
                         {% else %}
-                        <span class="text-gray-500">Reviewed</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" class="px-3 sm:px-6 py-4 text-center text-sm text-gray-500">
-                        No referrals found
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-inbox fs-1"></i>
+                                    <p class="mt-2">No referrals found</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
-{% block scripts %}
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="statusToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">Status Update</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            <!-- Message will be inserted here -->
+        </div>
+    </div>
+</div>
+
 <script>
-    // Referrals Table Filtering
-    const searchReferrals = document.getElementById('searchReferrals');
-    const statusFilter = document.getElementById('statusFilter');
-    const referralRows = document.querySelectorAll('.referral-row');
-    
-    function filterReferralsTable() {
-        const searchValue = searchReferrals.value.toLowerCase();
-        const statusValue = statusFilter.value;
-        
-        referralRows.forEach(row => {
-            const referrer = row.dataset.referrer.toLowerCase();
-            const referred = row.dataset.referred.toLowerCase();
-            const email = row.dataset.email.toLowerCase();
-            const status = row.dataset.status;
-            const reviewed = row.dataset.reviewed;
-            const isPublic = row.dataset.public;
-            
-            const searchMatch = referrer.includes(searchValue) || 
-                               referred.includes(searchValue) || 
-                               email.includes(searchValue);
-            
-            let statusMatch = true;
-            if (statusValue === 'registered' || statusValue === 'pending') {
-                statusMatch = status === statusValue;
-            } else if (statusValue === 'unreviewed') {
-                statusMatch = reviewed === 'unreviewed';
-            } else if (statusValue === 'public') {
-                statusMatch = isPublic === 'public';
-            }
-            
-            if (searchMatch && statusMatch) {
-                row.classList.remove('hidden');
-            } else {
-                row.classList.add('hidden');
-            }
-        });
+// Update referral status function
+function updateReferralStatus(referralId, newStatus) {
+    if (!confirm(`Are you sure you want to change the status to "${newStatus}"?`)) {
+        return;
     }
     
-    searchReferrals.addEventListener('input', filterReferralsTable);
-    statusFilter.addEventListener('change', filterReferralsTable);
+    // Show loading state
+    const statusBadge = document.getElementById(`status-badge-${referralId}`);
+    const originalText = statusBadge.textContent;
+    const originalClass = statusBadge.className;
+    statusBadge.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
+    statusBadge.className = 'badge bg-secondary';
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    
+    fetch(`{{ url_for('admin.update_referral_status', referral_id=0) }}`.replace('0', referralId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update the status badge
+            statusBadge.textContent = newStatus;
+            
+            // Update badge color based on status
+            let badgeClass = 'badge bg-';
+            switch(newStatus) {
+                case 'Pending':
+                    badgeClass += 'warning';
+                    break;
+                case 'Contacted':
+                    badgeClass += 'primary';
+                    break;
+                case 'Converted':
+                    badgeClass += 'success';
+                    break;
+                case 'Rejected':
+                    badgeClass += 'danger';
+                    break;
+                default:
+                    badgeClass += 'secondary';
+            }
+            statusBadge.className = badgeClass;
+            
+            // Show success toast
+            showToast(data.message, 'success');
+            
+            // Remove warning highlighting from row if it exists
+            const row = document.getElementById(`referral-row-${referralId}`);
+            if (row) {
+                row.classList.remove('table-warning');
+            }
+        } else {
+            // Revert to original state
+            statusBadge.textContent = originalText;
+            statusBadge.className = originalClass;
+            
+            // Show error toast
+            showToast(data.message || 'Error updating status', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Revert to original state
+        statusBadge.textContent = originalText;
+        statusBadge.className = originalClass;
+        
+        showToast('Network error occurred', 'error');
+    });
+}
+
+// Delete referral function
+function deleteReferral(referralId) {
+    if (!confirm('Are you sure you want to delete this referral? This action cannot be undone.')) {
+        return;
+    }
+    
+    // Since we don't have a dedicated delete route, we'll use a form submission instead
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{{ url_for('admin.bulk_referral_action') }}";
+    form.style.display = 'none';
+    
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'delete';
+    
+    const referralInput = document.createElement('input');
+    referralInput.type = 'hidden';
+    referralInput.name = 'referral_ids';
+    referralInput.value = referralId;
+    
+    form.appendChild(actionInput);
+    form.appendChild(referralInput);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Mark as read function
+function markAsRead(referralId) {
+    fetch(`{{ url_for('admin.mark_referral_read', referral_id=0) }}`.replace('0', referralId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            showToast('Error marking referral as read', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Network error occurred', 'error');
+    });
+}
+
+// Toast notification function
+function showToast(message, type) {
+    const toastElement = document.getElementById('statusToast');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    toastMessage.textContent = message;
+    
+    // Update toast styling based on type
+    const toastHeader = toastElement.querySelector('.toast-header');
+    if (type === 'success') {
+        toastHeader.className = 'toast-header bg-success text-white';
+    } else {
+        toastHeader.className = 'toast-header bg-danger text-white';
+    }
+    
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+}
 </script>
-{% endblock %}
 {% endblock %}
